@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="supabase.js"></script>
+<script src="supabase.js"></script><script src="jszip.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -73,7 +73,33 @@ var READY=(async function(){
 /* ---------- الواجهة: دخول/خروج/نسخة احتياطية ---------- */
 var css='#pf-bar{position:fixed;left:12px;bottom:12px;z-index:99999;font:600 13px/1.4 Tahoma,Arial,sans-serif;direction:rtl;display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:calc(100vw - 24px)}#pf-bar button{font:inherit;cursor:pointer;border:1px solid #c9d3dc;background:#fff;color:#12304a;border-radius:999px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.12)}#pf-bar .lock{opacity:.55;font-size:12px;padding:5px 11px}#pf-bar .lock:hover{opacity:1}#pf-st{background:#12304a;color:#fff;border-radius:10px;padding:6px 12px}#pf-dlg{position:fixed;inset:0;background:rgba(10,20,30,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl;font-family:Tahoma,Arial,sans-serif}#pf-dlg>div{background:#fff;color:#12304a;border-radius:14px;max-width:420px;width:100%;padding:20px}#pf-dlg h3{margin:0 0 8px}#pf-dlg label{display:block;margin:10px 0 4px;font-weight:700;font-size:13px}#pf-dlg input{width:100%;padding:10px;border:1px solid #b8c4cf;border-radius:8px;font:inherit;direction:ltr;text-align:left}#pf-dlg .row{display:flex;gap:8px;margin-top:14px}#pf-dlg button{font:inherit;font-weight:700;cursor:pointer;border-radius:8px;padding:9px 16px;border:1px solid #c9d3dc;background:#fff;color:#12304a}#pf-dlg button.pri{background:#0e6b4f;color:#fff;border-color:#0e6b4f}#pf-err{color:#b3261e;font-size:13px;margin-top:8px;min-height:18px}@media print{#pf-bar{display:none}}';
 function el(t,a,h){var e=document.createElement(t);for(var k in a||{})e.setAttribute(k,a[k]);if(h!=null)e.innerHTML=h;return e}
-function updateBar(){var s=document.getElementById('pf-st');if(!s)return;s.textContent=ADMIN?'مسجّلة الدخول · الحفظ تلقائي':''}
+function say(t){var s=document.getElementById('pf-st');if(s)s.textContent=t}
+function urlP(id){return new Promise(function(res){assetUrl(id,res)})}
+var CT={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',mp4:'video/mp4',webm:'video/webm',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation'};
+async function backupZip(){
+  try{say('جارٍ تجهيز النسخة…');var r=await sb.from('docs').select('*');if(r.error)throw r.error;var rows=r.data||[];
+    var zip=new JSZip();zip.file('docs.json',JSON.stringify({exported:new Date().toISOString(),docs:rows},null,1));
+    var ids={};JSON.stringify(rows).replace(/"assetId":"([pq]-[^"]+)"/g,function(m,i){ids[i]=1;return m});var keys=Object.keys(ids),n=0,miss=0;
+    for(var i=0;i<keys.length;i++){say('جارٍ تنزيل الملفات '+(++n)+' من '+keys.length+'…');try{var u=await urlP(keys[i]);var x=await _f(u);if(!x.ok)throw 0;zip.file('files/'+keys[i],await x.blob())}catch(e){miss++}}
+    say('جارٍ ضغط الملف…');var blob=await zip.generateAsync({type:'blob',compression:'STORE'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='portfolio-backup-'+new Date().toISOString().slice(0,10)+'.zip';document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},800);
+    say(miss?('تم، وتعذّر تنزيل '+miss+' ملف'):'تم تنزيل النسخة ✓');
+  }catch(e){say('تعذر إنشاء النسخة: '+(e.message||e))}
+}
+async function restoreZip(file){
+  try{var zip=await JSZip.loadAsync(file);var j=zip.file('docs.json');if(!j)throw new Error('الملف ليس نسخة احتياطية صالحة');
+    var docs=JSON.parse(await j.async('string')).docs||[];
+    if(!confirm('سيتم استعادة '+docs.length+' عنصرًا ورفع ملفات النسخة. العناصر المطابقة بالمعرّف ستُستبدل. متابعة؟'))return;
+    var names=Object.keys(zip.files).filter(function(k){return k.indexOf('files/')===0&&!zip.files[k].dir}),n=0;
+    for(var i=0;i<names.length;i++){var id=names[i].slice(6),ext=id.split('.').pop().toLowerCase();say('جارٍ رفع الملفات '+(++n)+' من '+names.length+'…');
+      var bl=new Blob([await zip.files[names[i]].async('arraybuffer')],{type:CT[ext]||'application/octet-stream'});
+      var up=await sb.storage.from(id.charAt(0)==='q'?'private-files':'public-files').upload(id.slice(2),bl,{contentType:bl.type,upsert:true});if(up.error)throw up.error}
+    say('جارٍ استعادة البيانات…');
+    for(var k=0;k<docs.length;k+=20){var ch=docs.slice(k,k+20).map(function(d){return{col:d.col,id:d.id,data:d.data,is_public:d.is_public,status:d.status,sort_order:d.sort_order||0,updated_at:new Date().toISOString()}});var r=await sb.from('docs').upsert(ch);if(r.error)throw r.error}
+    say('تمت الاستعادة ✓ — سيُعاد تحميل الصفحة');setTimeout(function(){location.reload()},1200);
+  }catch(e){say('تعذرت الاستعادة: '+(e.message||e))}
+}
+function updateBar(){var s=document.getElementById('pf-st');if(!s||s.dataset.busy)return;if(!s.textContent)s.textContent=ADMIN?'مسجّلة الدخول · الحفظ تلقائي':''}
 function openLogin(){
   var d=el('div',{id:'pf-dlg'},'<div><h3>دخول المعلمة</h3><label>البريد الإلكتروني</label><input id="pf-e" type="email" autocomplete="username"><label>كلمة المرور</label><input id="pf-p" type="password" autocomplete="current-password"><div id="pf-err"></div><div class="row"><button class="pri" id="pf-go">دخول</button><button id="pf-x">إلغاء</button></div></div>');
   document.body.appendChild(d);d.querySelector('#pf-e').focus();
@@ -92,7 +118,8 @@ function mount(){
   var b=el('div',{id:'pf-bar'});document.body.appendChild(b);
   if(!ADMIN){var l=el('button',{class:'lock',type:'button'},'دخول المعلمة');l.onclick=openLogin;b.appendChild(l);return}
   b.appendChild(el('span',{id:'pf-st'}));
-  var bk=el('button',{type:'button'},'نسخة احتياطية (JSON)');bk.onclick=async function(){var r=await sb.from('docs').select('*');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({exported:new Date().toISOString(),docs:r.data||[]},null,1)],{type:'application/json'}));a.download='portfolio-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},500)};b.appendChild(bk);
+  var bk=el('button',{type:'button'},'نسخة احتياطية كاملة (ZIP)');bk.onclick=backupZip;b.appendChild(bk);
+  var rs=el('label',{class:'lock'},'استعادة من نسخة<input type="file" id="pf-rs" accept=".zip" hidden>');rs.style.cssText='cursor:pointer;border:1px solid #c9d3dc;background:#fff;color:#12304a;border-radius:999px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.12);opacity:1;font-size:13px';b.appendChild(rs);rs.querySelector('input').onchange=function(e){var f=e.target.files[0];e.target.value='';if(f)restoreZip(f)};
   var out=el('button',{type:'button'},'تسجيل الخروج');out.onclick=async function(){await sb.auth.signOut();location.reload()};b.appendChild(out);
   updateBar();
 }
@@ -565,13 +592,20 @@ function infoCells(r,T){
   });
   return cells.map(c=>'<div class="cell '+c[2]+'"><b>'+esc(c[0])+'</b><span>'+c[1]+'</span></div>').join('');
 }
+function embedUrl(u){try{const x=new URL(u),h=x.hostname.replace(/^www\./,'');
+  if(h==='youtu.be')return'https://www.youtube.com/embed/'+x.pathname.slice(1);
+  if(h==='youtube.com'||h==='m.youtube.com'){if(x.pathname==='/watch'&&x.searchParams.get('v'))return'https://www.youtube.com/embed/'+x.searchParams.get('v');const m=x.pathname.match(/^\/(?:shorts|embed)\/([\w-]+)/);if(m)return'https://www.youtube.com/embed/'+m[1]}
+  if(h==='drive.google.com'){const m=x.pathname.match(/\/file\/d\/([\w-]+)/);if(m)return'https://drive.google.com/file/d/'+m[1]+'/preview'}
+}catch(e){}return''}
 function evBlock(r,T,o){
   const ev=(r.ev||[]);if(!ev.length)return'';
   const n=Math.min(3,ev.length);
   const figs=ev.map(e=>{
     const cap=esc(e.cap||'');
     if(e.kind==='image'){const src=(o.img&&o.img(e))||'assets/'+e.assetId;return'<figure><div class="ei"><img src="'+esc(src)+'" alt="'+cap+'"></div>'+(cap?'<figcaption>'+cap+'</figcaption>':'')+'</figure>'}
-    if(e.kind==='link'){const u=normUrl(e.url);const q=e.qr?qrSvg(u):'';return'<figure><div class="ei">'+(q||'<svg viewBox="0 0 24 24" fill="none" stroke="#5b6b7a" stroke-width="1.6" stroke-linecap="round">'+I.link+'</svg>')+'</div><figcaption>'+(cap?cap:'رابط')+'<a class="u" href="'+esc(u)+'" style="text-decoration:none">'+esc(hostOf(u))+'</a></figcaption></figure>'}
+    if(e.kind==='video'&&!o.dl){const u='assets/'+e.assetId;return'<figure style="grid-column:1/-1"><video src="'+esc(u)+'" controls preload="metadata" style="width:100%;max-height:480px;background:#000"></video><figcaption>'+(cap||esc(e.name||'فيديو'))+'</figcaption></figure>'}
+    if(e.kind==='file'){const u='assets/'+e.assetId;return'<figure><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="#5b6b7a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+I.file+'</svg></div><figcaption>'+(cap||esc(e.name||'ملف'))+(o.dl?'<span class="u" style="direction:rtl">'+esc(e.name||'ملف مرفق')+'</span>':'<a class="u" href="'+esc(u)+'" download="'+esc(e.name||'')+'" style="text-decoration:none">تنزيل الملف</a>')+'</figcaption></figure>'}
+    if(e.kind==='link'){const u=normUrl(e.url);const em=!o.dl&&embedUrl(u);if(em)return'<figure style="grid-column:1/-1"><div style="position:relative;padding-top:56.25%"><iframe src="'+esc(em)+'" title="'+cap+'" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div><figcaption>'+(cap||'فيديو')+' · <a href="'+esc(u)+'" target="_blank" rel="noopener">فتح الرابط</a></figcaption></figure>';const q=e.qr?qrSvg(u):'';return'<figure><div class="ei">'+(q||'<svg viewBox="0 0 24 24" fill="none" stroke="#5b6b7a" stroke-width="1.6" stroke-linecap="round">'+I.link+'</svg>')+'</div><figcaption>'+(cap?cap:'رابط')+'<a class="u" href="'+esc(u)+'" style="text-decoration:none">'+esc(hostOf(u))+'</a></figcaption></figure>'}
     if(e.kind==='pdf'&&!o.dl){const u='assets/'+e.assetId;return'<figure style="grid-column:1/-1"><iframe src="'+esc(u)+'" title="'+cap+'" style="width:100%;height:540px;border:0;display:block"></iframe><figcaption>'+(cap||esc(e.name||'ملف PDF'))+' · <a href="'+esc(u)+'" target="_blank" rel="noopener">فتح الملف في صفحة مستقلة</a></figcaption></figure>'}
     return'<figure><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="#5b6b7a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+I.file+'</svg></div><figcaption>'+(cap||esc(e.name||'ملف'))+(e.kind==='pdf'?'<span class="u" style="direction:rtl">ملف PDF مرفق في المنصة</span>':'')+'</figcaption></figure>';
   }).join('');
@@ -690,6 +724,18 @@ function vEvidence(){
    +'<div class="filters"><select class="in" id="efa" aria-label="العنصر" style="width:auto;max-width:280px">'+opt(AREAS.map(a=>[a.id,areaName(a.id)]),F.area,'كل العناصر والأقسام')+'</select><select class="in" id="eft" aria-label="النوع" style="width:auto">'+opt(TKEYS.map(k=>[k,TYPES[k].short]),F.type,'كل الأنواع')+'</select></div>'
    +(items.length?'<div class="gal">'+items.map(({e,r})=>'<button class="gi" data-act="lb" data-r="'+r.id+'" data-e="'+e.id+'"><img loading="lazy" src="assets/'+esc(e.assetId)+'" alt="'+esc(e.cap||r.title)+'"><div><b>'+esc(e.cap||'بدون وصف')+'</b>'+esc(r.title||'')+' · '+esc(hij(r.date))+'</div></button>').join('')+'</div>':'<div class="empty"><b>لا توجد صور بعد</b>أضيفي صورًا من داخل أي تقرير (قسم الشواهد).</div>');
 }
+const KL={image:'صورة',pdf:'PDF',link:'رابط',file:'ملف',video:'فيديو'};
+function libRows(){const q=(S.libQ||'').trim().toLowerCase(),K=S.libK||'',A=S.libA||'';const out=[];
+  sorted().forEach(r=>(r.ev||[]).forEach(e=>{if(K&&e.kind!==K)return;if(A&&!(r.areas||[]).includes(A))return;
+    const hay=[e.cap,e.name,e.url,r.title,KL[e.kind],hij(r.date),r.date,(r.areas||[]).map(areaName).join(' ')].join(' ').toLowerCase();if(q&&hay.indexOf(q)<0)return;out.push({e,r})}));return out}
+function libRes(){const rows=libRows();if(!rows.length)return'<div class="empty"><b>لا توجد نتائج</b>جرّبي كلمة أخرى أو أضيفي شواهد من داخل التقارير.</div>';
+  return'<p class="note">'+rows.length+' شاهد</p>'+rows.map(({e,r})=>{
+    const th=e.kind==='image'?'<img loading="lazy" src="assets/'+esc(e.assetId)+'" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px">':'<span style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--gold-soft,#f3ecdc);border-radius:8px">'+(e.kind==='link'?ic('link'):ic('file'))+'</span>';
+    return'<div class="card" style="display:flex;gap:12px;align-items:center;margin-bottom:8px;padding:10px 14px">'+th+'<div style="flex:1;min-width:0"><b>'+esc(e.cap||e.name||hostOf(e.url||'')||'بدون وصف')+'</b><div class="note" style="margin:2px 0 0">'+esc(KL[e.kind]||'ملف')+' · <a href="#edit-'+r.id+'">'+esc(r.title||'تقرير')+'</a> · '+esc(hij(r.date))+(r.vis==='private'?' · خاص':'')+(r.status==='draft'?' · مسودة':'')+'</div><div class="note" style="margin:2px 0 0">'+esc((r.areas||[]).map(areaName).join(' · '))+'</div></div></div>'}).join('')}
+function vLibrary(){if(!S.canWrite)return'<div class="empty"><b>هذه الصفحة للمعلمة فقط</b></div>';
+  const opt=(arr,sel,all)=>'<option value="">'+all+'</option>'+arr.map(([v,t])=>'<option value="'+esc(v)+'"'+(v===sel?' selected':'')+'>'+esc(t)+'</option>').join('');
+  return'<div class="hd"><div><h1 class="pg">مكتبة الشواهد</h1><p class="lead" style="margin:0">كل الشواهد المرفقة بالتقارير في مكان واحد. الشاهد يظهر تلقائيًا في كل عنصر ربطتِ تقريره به، دون نسخ مكررة.</p></div></div>'
+   +'<div class="filters"><input class="in" id="lib-q" type="search" placeholder="ابحثي بالاسم أو النوع أو التاريخ أو العنصر" value="'+esc(S.libQ||'')+'" style="flex:1;min-width:220px"><select class="in" id="lib-k" aria-label="النوع" style="width:auto">'+opt(Object.entries(KL),S.libK||'','كل الأنواع')+'</select><select class="in" id="lib-a" aria-label="العنصر" style="width:auto;max-width:260px">'+opt(AREAS.map(a=>[a.id,areaName(a.id)]),S.libA||'','كل العناصر والأقسام')+'</select></div><div id="lib-res">'+libRes()+'</div>'}
 function vSettings(){
   const s=S.settings;const f=(k,l,ph)=>'<label class="fld"><span>'+l+'</span><input class="in" id="s-'+k+'" data-set="'+k+'" value="'+esc(s[k])+'"'+(ph?' placeholder="'+ph+'"':'')+'></label>';
   return'<h1 class="pg">الإعدادات</h1><p class="lead">هذه البيانات تظهر في ترويسة كل تقرير وفي التوقيعات.</p>'
@@ -725,7 +771,7 @@ function evEd(r,T){
   }).join('');
   return'<div class="evgrid">'+items+'</div>'
    +(imgBusy?'<p class="note">'+esc(imgBusy)+'</p>':'')
-   +'<div class="upl">'+(S.assets?'<label class="btn">'+ic('img')+' رفع صور<input type="file" id="up-img" accept="image/*" multiple hidden></label><label class="btn'+(T.pdf?' pri':'')+'">'+ic('file')+' '+(T.pdf?'رفع التقرير الجاهز (PDF)':'رفع ملف PDF')+'<input type="file" id="up-pdf" accept="application/pdf" multiple hidden></label>':'')+'<button class="btn" data-act="show-link">'+ic('link')+' إضافة رابط</button></div>'
+   +'<div class="upl">'+(S.assets?'<label class="btn">'+ic('img')+' رفع صور<input type="file" id="up-img" accept="image/*" multiple hidden></label><label class="btn'+(T.pdf?' pri':'')+'">'+ic('file')+' '+(T.pdf?'رفع التقرير الجاهز (PDF)':'رفع ملف PDF')+'<input type="file" id="up-pdf" accept="application/pdf" multiple hidden></label><label class="btn">'+ic('file')+' رفع Word / Excel / PowerPoint / فيديو<input type="file" id="up-doc" accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,video/mp4,video/webm,video/quicktime" multiple hidden></label>':'')+'<button class="btn" data-act="show-link">'+ic('link')+' إضافة رابط</button></div>'
    +(S.addLink?'<div class="addlink"><input class="in" id="al-url" dir="ltr" placeholder="https://" aria-label="الرابط"><input class="in" id="al-cap" placeholder="وصف الرابط" aria-label="وصف الرابط"><button class="btn pri" data-act="add-link">إضافة</button></div>':'')
    +(T.pdf?'<p class="note">ارفعي ملف PDF الجاهز (حتى 20 ميغابايت للملف)، ويمكنك إضافة صور وروابط كشواهد إضافية.</p>':'')
    +(S.assets?'':'<p class="note">رفع الصور غير متاح في هذا العرض، ويمكنك إضافة الروابط. افتحي المنصة من حسابك لرفع الصور.</p>')
@@ -781,7 +827,7 @@ function siteHead(){
 function admBar(){
   if(!S.canWrite)return'';
   if(S.present)return'<div class="admbar"><button class="btn sm" data-act="present">'+ic('edit')+' العودة إلى وضع التحرير</button><span class="note" style="margin:0">هكذا يظهر الملف للزائر.</span></div>';
-  const L=[['dash','لوحة المتابعة'],['reports','التقارير'],['evidence','معرض الشواهد'],['areas','التغطية والمجلدات'],['settings','الإعدادات']];
+  const L=[['dash','لوحة المتابعة'],['reports','التقارير'],['library','مكتبة الشواهد'],['evidence','معرض الشواهد'],['areas','التغطية والمجلدات'],['settings','الإعدادات']];
   return'<div class="admbar">'+L.map(([k,t])=>'<a class="btn sm ghost" href="#'+k+'"'+(S.view===k?' aria-current="page" style="background:var(--gold-soft)"':'')+'>'+t+'</a>').join('')+'<a class="btn sm pri" href="#new">'+ic('plus')+' تقرير جديد</a><button class="btn sm" data-act="present" style="margin-inline-start:auto">'+ic('eye')+' عرض كزائر</button></div>';
 }
 function repCard(r){
@@ -930,7 +976,7 @@ function render(soft){
   if(!S.loaded)body='<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
   else{
     const ban=(S.mem?'<div class="banner">التخزين غير متاح في هذا العرض، لذلك لن تُحفظ التقارير بعد إغلاق الصفحة. افتحي المنصة من حسابك.</div>':'')+(S.dbErr?'<div class="banner">تعذر تحميل التقارير المحفوظة. أعيدي تحميل الصفحة.</div>':'')+(!S.canWrite&&!S.mem?'<div class="banner">لديك صلاحية القراءة فقط.</div>':'');
-    const map={home:vHome,about:vAbout,perf:vPerf,el:vEl,log:vLog,dash:vDash,reports:vReports,new:vNew,areas:vAreas,evidence:vEvidence,settings:vSettings,edit:vEdit,view:vView};
+    const map={home:vHome,about:vAbout,perf:vPerf,el:vEl,log:vLog,dash:vDash,reports:vReports,new:vNew,areas:vAreas,evidence:vEvidence,library:vLibrary,settings:vSettings,edit:vEdit,view:vView};
     body=ban+(map[v]||vHome)();
   }
   app.innerHTML=siteHead()+'<div class="wrap">'+admBar()+'<main>'+body+'</main></div>'+(S.lb?lbHTML():'');
@@ -945,7 +991,7 @@ function route(){
     if(S.view==='edit'&&!S.canWrite){S.view='view'}
     S.tab='form';S.addLink=false;S.save='';imgBusy='';
   }else if((m=h.match(/^el-([a-z0-9]+)$/))){if(m[1]==='s07'){location.hash='#log';return}S.view='el';S.elId=m[1];S.cur=null}
-  else{S.view=['home','about','perf','log','dash','reports','new','areas','evidence','settings'].includes(h)?h:'home';S.cur=null;if(h!=='new')S.newArea=''}
+  else{S.view=['home','about','perf','log','dash','reports','new','areas','evidence','library','settings'].includes(h)?h:'home';S.cur=null;if(h!=='new')S.newArea=''}
   render();window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',route);
@@ -992,6 +1038,7 @@ function rerenderForm(r,focusId){
 function refreshEv(r){const b=$('#evbox');if(b)b.innerHTML=evEd(r,TYPES[r.type])}
 app0.addEventListener('input',e=>{
   const t=e.target,r=S.cur;
+  if(t.id==='lib-q'){S.libQ=t.value;const b=$('#lib-res');if(b)b.innerHTML=libRes();return}
   if(t.id==='fq'){S.filter.q=t.value;const l=$('#rlist');if(l){const keep=S.view;render();const q=$('#fq');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}return}
   if(t.dataset.pg){const id=t.dataset.pg;(S.pages[id]=S.pages[id]||{}).intro=t.value;clearTimeout(S.pT);S.pT=setTimeout(()=>savePage(id),700);return}
   if(t.dataset.ab){(S.pages.about=S.pages.about||{})[t.dataset.ab]=t.value;clearTimeout(S.pT);S.pT=setTimeout(()=>savePage('about'),700);return}
@@ -1023,6 +1070,10 @@ app0.addEventListener('change',async e=>{
   if(t.id==='up-pdf'&&r&&S.assets){const fs=[...t.files];t.value='';if(!fs.length)return;for(const f of fs){if(f.size>20*1024*1024){toast('حجم «'+f.name+'» أكبر من 20 ميغابايت');continue}imgBusy='جارٍ رفع '+f.name+'…';refreshEv(r);
     try{const res=await S.assets.upload(f,{priv:r.vis==='private'});r.ev.push({id:uid(),kind:'pdf',assetId:res.id,name:f.name,cap:f.name.replace(/\.pdf$/i,'')})}catch(err){toast('تعذر رفع '+f.name)}}
     imgBusy='';refreshEv(r);schedule(r);updatePreview();return}
+  if(t.id==='up-doc'&&r&&S.assets){const fs=[...t.files];t.value='';for(const f of fs){if(f.size>50*1024*1024){toast('حجم «'+f.name+'» أكبر من 50 ميغابايت');continue}imgBusy='جارٍ رفع '+f.name+'…';refreshEv(r);
+    try{const res=await S.assets.upload(f,{priv:r.vis==='private'});const isV=(f.type||'').indexOf('video/')===0;r.ev.push({id:uid(),kind:isV?'video':'file',assetId:res.id,name:f.name,cap:f.name.replace(/\.[^.]+$/,'')})}catch(err){toast('تعذر رفع '+f.name)}}
+    imgBusy='';refreshEv(r);schedule(r);updatePreview();return}
+  if(t.id==='lib-k'||t.id==='lib-a'){if(t.id==='lib-k')S.libK=t.value;else S.libA=t.value;const b=$('#lib-res');if(b)b.innerHTML=libRes();return}
   if(t.id==='imp'){const f=t.files[0];if(!f)return;try{const d=JSON.parse(await f.text());let n=0;
       if(d.settings){S.settings={...DEF_SET,...d.settings};await saveSettings()}
       for(const x of (d.reports||[])){if(!x.id||!x.type)continue;if(!byId(x.id))S.reports.push(x);if(!S.mem&&S.db)await S.db.doc('reports/'+x.id).set(clean(x));n++}
