@@ -408,13 +408,19 @@ const AREAS=[
  {id:'e09',n:'09',t:'الإدارة الصفية',g:'e',f:'1Mwj0NOSlaLatyS0zNb3BzuWRth9iEOVO'},
  {id:'e10',n:'10',t:'تحليل نتائج المتعلمين وتشخيص مستوياتهم',g:'e',f:'1o0f4P24dyNyaW2NmIQln3GRcaW1KqSFO'},
  {id:'e11',n:'11',t:'تنوع أساليب التقويم',g:'e',f:'1Vev53U4KRob4pOtFq3k0et3OfOLeummn'},
- {id:'s02',n:'02',t:'التعليم والتعلم',g:'s',f:'1KSSy2E57YdH1GR_zkZ0y_fK55NovjHO6'},
  {id:'s03',n:'03',t:'المبادرات والمشروعات',g:'s',f:'1FQ-CMvTHuBk07vzjVARgS3vDorDQ4diA'},
  {id:'s04',n:'04',t:'الخطة التشغيلية',g:'s',f:'1jb9zTOCiJ3kCr0k_LwvdYCi-yq5b0hzF'},
- {id:'s05',n:'05',t:'القيادة والتطوير المهني',g:'s',f:'1-GbQdNxeoV2mJU_0g7lQ3wHNq6hUaJz1'},
- {id:'s06',n:'06',t:'قياس الأثر والإنجازات',g:'s',f:'1WYCuk75hERlw9TT_tLkNBll1eMs3Lxki'},
+ {id:'s05',n:'05',t:'التطوير المهني ومجتمعات التعلم',g:'s',f:'1-GbQdNxeoV2mJU_0g7lQ3wHNq6hUaJz1'},
  {id:'s07',n:'07',t:'السجل التراكمي للأعمال',g:'s',f:'18-SU9T4H22P7M3LwyyB90stNUZ0t_Dzf'}
 ];
+const PROGS=[
+['الإدارة المدرسية','قيمنا هويتنا','بسلوكي أتميز'],['الإدارة المدرسية','انضباطي سر تميزي','يوم بلا غياب'],['الإدارة المدرسية','الاحتفاء باليوم الوطني / يوم التأسيس','المحافظة على الممتلكات'],['الإدارة المدرسية','خطتنا بوصلتنا','التخطيط القائم على البيانات'],['الإدارة المدرسية','خطوة نحو التميز 100%','نرتقي لنحقق 100%'],['الإدارة المدرسية','نموّي المهني','من الاحتياج إلى الرخصة'],['الإدارة المدرسية','الزيارات الصفية التطويرية','نرتقي بممارساتنا'],['الإدارة المدرسية','صناع التميز','تطوير الأداء الوظيفي'],['الإدارة المدرسية','قياس رضا المجتمع المدرسي','صوتكِ يهمنا'],['الإدارة المدرسية','بيئتي الآمنة','أخبرني بأمان'],['الإدارة المدرسية','شراكة وعطاء','أثر (شراكة فاعلة وعطاء مستدام)'],['الإدارة المدرسية','جسور التواصل','أسرة واعية'],['الإدارة المدرسية','أنا قدوة','ميثاق أخلاقيات مهنة التعليم'],['الإدارة المدرسية','مستقبلي يبدأ من مساري','اكتشفي مسارك'],
+['التعليم والتعلم','مهارات المستقبل','تنمية مهارات التفكير العليا'],['التعليم والتعلم','التعليم الذكي (التقنية للحياة)','التمكين الرقمي'],['التعليم والتعلم','قيادات واعدة','القيادة الطلابية لربط المعرفة بالحياة'],['التعليم والتعلم','عقول صاعدة','صناع الفرص (اكتشاف المواهب)'],
+['نواتج التعلم','جسور الدعم لسد الفجوات التعليمية','جسور الدعم (للمهارات القرائية والعددية)'],['نواتج التعلم','قدراتي طريقي','نرفع قدراتنا'],['نواتج التعلم','إتقان التحصيلي','نستعد للتحصيلي'],['نواتج التعلم','الباحثة المبدعة','أتعلم وأبحث بنفسي'],['نواتج التعلم','صحة ووعي','صحتي أولًا'],
+['البيئة المدرسية','سلامتي أولًا','عين لتعزيز ثقافة الأمن والسلامة'],['البيئة المدرسية','جودة المرافق التعليمية','مرافقنا مسؤوليتنا'],['البيئة المدرسية','بيئة واعية','لنحافظ عليها نظيفة']
+];
+PROGS.forEach((p,i)=>{const n=String(i+1).padStart(2,'0');AREAS.push({id:'p'+n,n:String(i+1),t:p[1],g:'p',dom:p[0],init:p[2]})});
+const PDOMS=['الإدارة المدرسية','التعليم والتعلم','نواتج التعلم','البيئة المدرسية'];
 const AREA=Object.fromEntries(AREAS.map(a=>[a.id,a]));
 const TERMS=['الفصل الدراسي الأول','الفصل الدراسي الثاني','الفصل الدراسي الثالث'];
 const MEANS=['أجهزة رقمية (جوال / لوحي / حاسب)','رابط اللعبة / رمز QR','جهاز عرض','سبورة ذكية','سبورة تقليدية','أوراق عمل','كتاب الطالبة','اختبار قبلي / بعدي'];
@@ -478,7 +484,7 @@ function dow(iso){try{return new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn',{
 const greg=iso=>iso?iso.replaceAll('-','/'):'';
 const fmtDate=iso=>iso?dow(iso)+' '+hij(iso)+' ('+greg(iso)+'م)':'';
 const area=id=>AREA[id];
-const areaName=id=>{const a=AREA[id];return a?(a.g==='e'?a.n+'. ':'')+a.t:''};
+const areaName=id=>{const a=AREA[id];return a?(a.g==='e'?a.n+'. ':a.g==='p'?'برنامج '+a.n+' – ':'')+a.t:''};
 const clean=o=>JSON.parse(JSON.stringify(o));
 function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3200)}
 function qrSvg(url){try{const q=qrcode(0,'M');q.addData(url);q.make();return q.createSvgTag({cellSize:3,margin:0,scalable:true})}catch(e){return''}}
@@ -505,16 +511,24 @@ async function initStore(){
   db.doc('settings/main').onSnapshot(s=>{if(s.exists){S.settings={...DEF_SET,...s.data()}}if(S.view!=='edit')safeRender()},()=>{});
   db.collection('pages').onSnapshot(snap=>{S.pages={};snap.docs.forEach(d=>{S.pages[d.id]=d.data()});if(S.view!=='edit')safeRender()},()=>{});
   db.collection('reports').onSnapshot(snap=>{
-    S.reports=snap.docs.map(d=>({...d.data(),id:d.id}));S.loaded=true;
+    S.reports=snap.docs.map(d=>norm2({...d.data(),id:d.id}));S.loaded=true;
+    if(S.canWrite&&!S.mem)S.reports.filter(r=>r._m).forEach(r=>{delete r._m;persist(r)});
     if((S.view==='edit'||S.view==='view')&&!S.cur){const m=location.hash.match(/-([a-z0-9]+)$/);S.cur=byId(m&&m[1])||null;render()}
     else if(S.view==='edit'){updateLists()}else safeRender();
   },()=>{S.loaded=true;S.dbErr=true;render()});
   setTimeout(()=>{if(!S.loaded){S.loaded=true;S.dbErr=true;render()}},10000);
 }
+const M2={rcomms001:['p12'],rimgannounce:['p16'],rpdfcurr001:[],rpdfenrich1:['p18'],rpdffeyn01:['p15'],rpdfincq01:['p15'],rpdfplc0001:['p06'],rpdfplick1:['p16'],rpdfquiz001:['p19'],rpdfsymbol1:['p19'],rpdfvisit1:['p07'],rstrategy1:['p15'],zy0xqceq9e:['p18']};
+function norm2(r){
+  if(r.m2)return r;
+  const a=(r.areas||[]).filter(x=>x!=='s02'&&x!=='s06'&&x!=='s04');
+  (M2[r.id]||[]).forEach(x=>{if(!a.includes(x))a.push(x)});
+  const ch=a.join()!==(r.areas||[]).join();
+  r.areas=a;r.m2=1;if(ch||true)r._m=1;return r}
 function setSave(st){S.save=st;const el=$('#savest');if(el){el.className='savest '+(st==='ok'?'ok':st==='bad'?'bad':'');el.innerHTML=st==='saving'?'جارٍ الحفظ…':st==='ok'?ic('check')+' تم الحفظ':st==='bad'?'تعذر الحفظ':st==='dirty'?'تغييرات غير محفوظة':''}}
 function schedule(r){setSave('dirty');clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist(r),700)}
 async function persist(r){
-  r.updated=Date.now();
+  r.updated=Date.now();r.m2=1;
   const i=S.reports.findIndex(x=>x.id===r.id);if(i<0)S.reports.push(r);
   if(S.mem||!S.db){setSave('ok');return}
   if(!S.canWrite){setSave('bad');return}
@@ -789,6 +803,7 @@ function infoEd(r,T){
 }
 function formHTML(r){
   const T=TYPES[r.type];
+  const aGp=d=>AREAS.filter(a=>a.g==='p'&&a.dom===d).map(a=>'<label><input type="checkbox" data-area="'+a.id+'"'+((r.areas||[]).includes(a.id)?' checked':'')+'><span>'+esc(a.n+'. '+a.t)+'</span></label>').join('');
   const aG=g=>AREAS.filter(a=>a.g===g).map(a=>'<label><input type="checkbox" data-area="'+a.id+'"'+((r.areas||[]).includes(a.id)?' checked':'')+'><span>'+esc((a.g==='e'?a.n+'. ':'')+a.t)+'</span></label>').join('');
   const blocks=T.blocks.map(b=>b.t==='list'||b.t==='numlist'?listEd(r,b):b.t==='checks'?checksEd(r,b):b.t==='sections'?secsEd(r,b):fld(b.l,'<textarea class="in" id="b-'+b.k+'" data-f="'+b.k+'">'+esc(r.f[b.k]||'')+'</textarea>')).join('');
   return'<div class="fs"><h3>البيانات الأساسية <small>'+esc(T.name)+'</small></h3>'
@@ -796,7 +811,7 @@ function formHTML(r){
    +'<div class="row2">'+fld(T.docTitle?'تاريخ التنفيذ':'تاريخ التقرير','<input class="in" type="date" id="f-date" data-top="date" value="'+esc(r.date)+'"><small class="hij" id="hij-date">'+esc(fmtDate(r.date))+'</small>')
    +fld('الفصل الدراسي','<select class="in" id="f-term" data-top="term">'+opts(TERMS,r.term)+'</select>')+'</div>'
    +'<div class="row2">'+fld('الخصوصية','<select class="in" id="f-vis" data-top="vis"><option value="public"'+(r.vis!=='private'?' selected':'')+'>عام (يراه الزوار)</option><option value="private"'+(r.vis==='private'?' selected':'')+'>خاص (لي فقط)</option></select>')+fld('حالة النشر','<select class="in" id="f-status" data-top="status"><option value="published"'+(r.status!=='draft'?' selected':'')+'>منشور</option><option value="draft"'+(r.status==='draft'?' selected':'')+'>مسودة (لا تظهر للزوار)</option></select>')+'</div>'
-   +'<div class="fld"><span>الربط بعناصر الملف</span><div class="glabel">عناصر الأداء الوظيفي</div><div class="areas">'+aG('e')+'</div><div class="glabel">أقسام أخرى</div><div class="areas">'+aG('s')+'</div></div></div>'
+   +'<div class="fld"><span>الربط بعناصر الملف</span><div class="glabel">عناصر الأداء الوظيفي</div><div class="areas">'+aG('e')+'</div><div class="glabel">أقسام أخرى</div><div class="areas">'+aG('s')+'</div>'+PDOMS.map(d=>'<div class="glabel">برامج الخطة التشغيلية – '+d+'</div><div class="areas">'+aGp(d)+'</div>').join('')+'</div></div>'
    +(T.info.length?'<div class="fs"><h3>بيانات التقرير</h3><div class="row2">'+infoEd(r,T)+'</div></div>':'')
    +'<div class="fs"><h3>المحتوى</h3>'+blocks+'</div>'
    +'<div class="fs"><h3>'+esc(T.evLabel||'الشواهد')+' <small>صور وروابط وملفات</small></h3><div id="evbox">'+evEd(r,T)+'</div></div>'
@@ -815,12 +830,13 @@ function vView(){
 }
 
 /* ---------- portfolio site views ---------- */
-const SITE=[['home','الرئيسية','#home'],['about','عن المعلمة','#about'],['perf','الأداء الوظيفي','#perf'],['s02','التعليم والتعلم','#el-s02'],['s03','المبادرات والمشروعات','#el-s03'],['s04','الخطة التشغيلية','#el-s04'],['s05','القيادة والتطوير المهني','#el-s05'],['s06','قياس الأثر','#el-s06'],['log','السجل التراكمي','#log']];
+const SITE=[['home','الرئيسية','#home'],['about','عن المعلمة','#about'],['perf','الأداء الوظيفي','#perf'],['s03','المبادرات والمشروعات','#el-s03'],['s04','الخطة التشغيلية','#el-s04'],['s05','التطوير المهني ومجتمعات التعلم','#el-s05'],['log','السجل التراكمي','#log']];
 const adm=()=>S.canWrite&&!S.present;
 const reportsOf=id=>sorted().filter(r=>(r.areas||[]).includes(id));
 const evCount=rs=>rs.reduce((n,r)=>n+(r.ev||[]).length,0);
 const imgsOf=rs=>{const o=[];rs.forEach(r=>(r.ev||[]).forEach(e=>{if(e.kind==='image')o.push({e,r})}));return o};
-function siteKey(){const v=S.view;if(v==='home'||v==='perf'||v==='log'||v==='about')return v;if(v==='el'){const a=AREA[S.elId];if(!a)return'';if(a.g==='e')return'perf';return a.id==='s07'?'log':a.id}return''}
+const planRs=()=>S.reports.filter(r=>(r.areas||[]).some(x=>AREA[x]&&AREA[x].g==='p'));
+function siteKey(){const v=S.view;if(v==='home'||v==='perf'||v==='log'||v==='about')return v;if(v==='el'){const a=AREA[S.elId];if(!a)return'';if(a.g==='e')return'perf';if(a.g==='p')return's04';return a.id==='s07'?'log':a.id}return''}
 function siteHead(){
   const k=siteKey();
   return'<div class="top"><div class="top-in"><a class="brand" href="#home"><span class="mark">'+ic('book')+'</span><span><b>'+esc(S.settings.full||S.settings.teacher)+'</b><small>ملف الإنجاز والتميز المهني · '+esc(S.settings.year)+'هـ</small></span></a><nav class="nav" aria-label="التنقل">'+SITE.map(([key,t,h])=>'<a href="'+h+'"'+(k===key?' aria-current="page"':'')+'>'+t+'</a>').join('')+'</nav></div></div>';
@@ -878,11 +894,9 @@ function vHome(){
   const tiles=[
    ['#about','cap','عن المعلمة','رؤيتي ورسالتي ومؤهلاتي ودوراتي ومشاركاتي.',[]],
    ['#perf','grid','الأداء الوظيفي','أحد عشر عنصرًا يوثّق كل منها بالتقارير والشواهد.',eRs],
-   ['#el-s02','book','التعليم والتعلم','استراتيجيات التدريس والتعلم داخل الصف.',reportsOf('s02')],
-   ['#el-s03','flag','المبادرات والمشروعات','جسر، MathX، ومشروعات الطالبات.',reportsOf('s03')],
-   ['#el-s04','star','الخطة التشغيلية','المبادرات الرئيسة وأعمال لجنة الخطة التشغيلية.',reportsOf('s04')],
-   ['#el-s05','cap','القيادة والتطوير المهني','مجتمعات التعلم المهنية والتطوير المهني.',reportsOf('s05')],
-   ['#el-s06','bulb','قياس الأثر والإنجازات','قياس الأثر بالبيانات الفعلية فقط.',reportsOf('s06')],
+   ['#el-s03','flag','المبادرات والمشروعات','مبادراتي ومشروعاتي الخاصة وقياس أثرها.',reportsOf('s03')],
+   ['#el-s04','star','الخطة التشغيلية','برامج الخطة التي شاركتُ في تنفيذها، وما نفّذته تحت كل برنامج.',planRs()],
+   ['#el-s05','cap','التطوير المهني ومجتمعات التعلم','دوري كمنسقة مجتمعات التعلم المهنية والتطوير المهني.',reportsOf('s05')],
    ['#log','file','السجل التراكمي للأعمال','كل الأعمال مرتبة بالتاريخ في جدول واحد.',S.reports]
   ];
   const recent=sorted().slice(0,6);
@@ -920,9 +934,23 @@ function critCard(id){
 }
 function extras(id){
   if(id==='s03')return'<h2 class="sec">المشروعات</h2><div class="cols2"><div class="card"><span class="chip">برنامج علاجي</span><h3 style="margin:8px 0 4px">جسر</h3><p style="margin:0;color:var(--mut)">خطة علاجية لمعالجة الفجوات التعليمية في الرياضيات لطالبات الأول الثانوي، تقوم على اختبار قبلي وبعدي وقياس الإتقان وتصنيف الطالبات في مسارات. تُعرض نتائجها بعد قياسها فقط.</p></div><div class="card"><span class="chip t">قيد التطوير</span><h3 style="margin:8px 0 4px">MathX</h3><p style="margin:0;color:var(--mut)">مشروع متحف الرياضيات التفاعلي. ما زال قيد التطوير ولم تُقَس نتائجه بعد.</p></div></div>';
-  if(id==='s04')return'<h2 class="sec">المبادرات الرئيسة</h2><div class="cols2">'+[['قيادةٌ تُلهم','الإدارة المدرسية'],['بصمة تعلّم','التعليم والتعلم'],['قِمَم','نواتج التعلم'],['بيئة ذكية','البيئة المدرسية']].map(x=>'<div class="card"><span class="chip">'+x[1]+'</span><h3 style="margin:8px 0 0">'+x[0]+'</h3></div>').join('')+'</div>';
-  if(id==='s06')return'<div class="card" style="margin-bottom:18px"><b>ملاحظة</b><p class="note" style="margin:4px 0 0">لا تُعرض هنا نسب أو نتائج إلا من قياسات فعلية مرفقة بتقاريرها وشواهدها.</p></div>';
+  if(id==='s04'){
+    const ed=adm();
+    return'<div class="card" style="margin-bottom:18px"><b>ملاحظة</b><p class="note" style="margin:4px 0 0">للخطة التشغيلية ملف مستقل. تُعرض هنا مشاركاتي في تنفيذ برامجها فقط: اسم المهمة ومتطلباتها وما نفّذته تحت كل برنامج.</p></div>'
+    +PDOMS.map(d=>{
+      const ps=AREAS.filter(a=>a.g==='p'&&a.dom===d).filter(a=>ed||reportsOf(a.id).length||((S.pages[a.id]||{}).task||'').trim());
+      if(!ps.length)return'';
+      return'<h2 class="sec">مجال '+d+'</h2><div class="alist">'+ps.map(a=>{const rs=reportsOf(a.id),pg=S.pages[a.id]||{};
+        return'<div class="arow"><div style="flex:1;min-width:0"><a href="#el-'+a.id+'"><b>برنامج '+a.n+' – '+esc(a.t)+'</b></a><div class="note" style="margin:2px 0 0">مبادرة '+esc(a.init)+(pg.task?' · مهمتي: '+esc(pg.task):'')+'</div></div><span class="chip t">'+rs.length+' مشاركة</span><span class="chip t">'+evCount(rs)+' شاهد</span>'+(ed?'<button class="btn sm" data-act="newfor" data-a="'+a.id+'">'+ic('plus')+' مشاركة</button>':'')+'</div>'}).join('')+'</div>'}).join('');
+  }
+  if(id==='s05')return'<div class="card" style="margin-bottom:18px"><b>ملاحظة</b><p class="note" style="margin:4px 0 0">لمجتمعات التعلم المهنية ملف مستقل بصفتي منسقتها. تُعرض هنا نبذة عن دوري ومهامي ومتطلباتها وأبرز شواهدها.</p></div>';
   return'';
+}
+function progBox(a,ed,pg){
+  if(a.g!=='p')return'';
+  const info='<div class="note" style="margin-bottom:10px">مجال '+esc(a.dom)+' · مبادرة '+esc(a.init)+'</div>';
+  if(ed)return'<div class="card" style="margin-bottom:18px">'+info+'<label class="fld"><span>مهمتي في البرنامج</span><input class="in" data-pgk="'+a.id+'|task" value="'+esc(pg.task||'')+'" placeholder="اسم المهمة"></label><label class="fld"><span>متطلبات المهمة</span><textarea class="in" rows="2" data-pgk="'+a.id+'|req" placeholder="المتطلبات">'+esc(pg.req||'')+'</textarea></label></div>';
+  return(pg.task||pg.req)?'<div class="card" style="margin-bottom:18px">'+info+(pg.task?'<p style="margin:0 0 6px"><b>مهمتي:</b> '+esc(pg.task)+'</p>':'')+(pg.req?'<p style="margin:0"><b>المتطلبات:</b> '+esc(pg.req)+'</p>':'')+'</div>':'<div class="card" style="margin-bottom:18px">'+info+'</div>';
 }
 function vEl(){
   const id=S.elId,a=AREA[id];
@@ -930,12 +958,12 @@ function vEl(){
   const rs=reportsOf(id),imgs=imgsOf(rs),pg=S.pages[id]||{},ed=adm();
   const list=AREAS.filter(x=>x.g===a.g&&x.id!=='s07'),i=list.findIndex(x=>x.id===id);
   const pv=list[i-1],nx=list[i+1];
-  const crumb=a.g==='e'?'<a href="#home">الرئيسية</a> / <a href="#perf">الأداء الوظيفي</a>':'<a href="#home">الرئيسية</a>';
-  const lnk=(x,d)=>x?'<a class="btn" href="#el-'+x.id+'">'+(d==='p'?ic('right')+' ':'')+esc((x.g==='e'?x.n+'. ':'')+x.t)+(d==='n'?' '+ic('left'):'')+'</a>':'<span></span>';
-  return'<div class="band"><div><div class="crumb">'+crumb+'</div><h1>'+(a.g==='e'?'<span class="no">'+a.n+'</span>':'')+esc(a.t)+'</h1></div><div class="nums2"><div><b>'+rs.length+'</b><span>تقرير</span></div><div><b>'+evCount(rs)+'</b><span>شاهد</span></div><button class="btn sm" data-act="dlarea" data-a="'+a.id+'">'+ic('dl')+' تنزيل تقرير جاهز</button>'+(ed?'<a class="btn sm" href="'+driveUrl(a.f)+'" target="_blank" rel="noopener">'+ic('folder')+' مجلد Drive</a><button class="btn sm" data-act="newfor" data-a="'+a.id+'">'+ic('plus')+' تقرير</button>':'')+'</div></div>'
+  const crumb=a.g==='e'?'<a href="#home">الرئيسية</a> / <a href="#perf">الأداء الوظيفي</a>':a.g==='p'?'<a href="#home">الرئيسية</a> / <a href="#el-s04">الخطة التشغيلية</a>':'<a href="#home">الرئيسية</a>';
+  const lnk=(x,d)=>x?'<a class="btn" href="#el-'+x.id+'">'+(d==='p'?ic('right')+' ':'')+esc(areaName(x.id))+(d==='n'?' '+ic('left'):'')+'</a>':'<span></span>';
+  return'<div class="band"><div><div class="crumb">'+crumb+'</div><h1>'+(a.g==='e'||a.g==='p'?'<span class="no">'+a.n+'</span>':'')+esc(a.t)+'</h1></div><div class="nums2"><div><b>'+rs.length+'</b><span>تقرير</span></div><div><b>'+evCount(rs)+'</b><span>شاهد</span></div><button class="btn sm" data-act="dlarea" data-a="'+a.id+'">'+ic('dl')+' تنزيل تقرير جاهز</button>'+(ed?'<a class="btn sm" href="'+driveUrl(a.f)+'" target="_blank" rel="noopener">'+ic('folder')+' مجلد Drive</a><button class="btn sm" data-act="newfor" data-a="'+a.id+'">'+ic('plus')+' تقرير</button>':'')+'</div></div>'
    +(ed?'<label class="fld"><span>تمهيد الصفحة (يظهر للزائر)</span><textarea class="in" id="pg-intro" data-pg="'+id+'" placeholder="اكتبي نبذة قصيرة عن هذا المحور وما أنجزتِه فيه">'+esc(pg.intro||'')+'</textarea></label>':(pg.intro?'<p class="intro">'+esc(pg.intro)+'</p>':''))
-   +(a.g==='e'&&ed?critCard(id):'')+extras(id)
-   +'<h2 class="sec">التقارير</h2>'+(rs.length?'<div class="rgrid">'+rs.map(repCard).join('')+'</div>':'<div class="empty"><b>لا توجد تقارير في هذا المحور بعد</b>'+(ed?'اضغطي «تقرير» لإضافة أول تقرير وربطه به.':'')+'</div>')
+   +(a.g==='e'&&ed?critCard(id):'')+extras(id)+progBox(a,ed,pg)
+   +(id==='s04'?'':'<h2 class="sec">'+(a.g==='p'?'مشاركاتي في تنفيذ البرنامج':'التقارير')+'</h2>')+(id==='s04'?'':rs.length?'<div class="rgrid">'+rs.map(repCard).join('')+'</div>':'<div class="empty"><b>لا توجد تقارير في هذا المحور بعد</b>'+(ed?'اضغطي «تقرير» لإضافة أول تقرير وربطه به.':'')+'</div>')
    +(imgs.length?'<h2 class="sec">معرض الشواهد</h2>'+gallery(imgs):'')
    +'<div class="pn">'+lnk(pv,'p')+lnk(nx,'n')+'</div>';
 }
@@ -1041,6 +1069,7 @@ app0.addEventListener('input',e=>{
   const t=e.target,r=S.cur;
   if(t.id==='lib-q'){S.libQ=t.value;const b=$('#lib-res');if(b)b.innerHTML=libRes();return}
   if(t.id==='fq'){S.filter.q=t.value;const l=$('#rlist');if(l){const keep=S.view;render();const q=$('#fq');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}return}
+  if(t.dataset.pgk){const [pid,k]=t.dataset.pgk.split('|');(S.pages[pid]=S.pages[pid]||{})[k]=t.value;clearTimeout(S.pT);S.pT=setTimeout(()=>savePage(pid),700);return}
   if(t.dataset.pg){const id=t.dataset.pg;(S.pages[id]=S.pages[id]||{}).intro=t.value;clearTimeout(S.pT);S.pT=setTimeout(()=>savePage(id),700);return}
   if(t.dataset.ab){(S.pages.about=S.pages.about||{})[t.dataset.ab]=t.value;clearTimeout(S.pT);S.pT=setTimeout(()=>savePage('about'),700);return}
   if(t.dataset.set){S.settings[t.dataset.set]=t.value;clearTimeout(S.sT);S.sT=setTimeout(saveSettings,700);return}
