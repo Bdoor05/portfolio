@@ -1,4 +1,4 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0}.banner{display:none!important}</style></head><body><title>ملف إنجاز بدور الشبرمي</title>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0}.banner{display:none!important}</style></head><body><title>ملف إنجاز بدور الشبرمي</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -8,7 +8,7 @@
 'use strict';
 var SBU='https://wbwadziloosvwypjeprr.supabase.co',SBK='sb_publishable_gQeufGrTB78g2jIvTLbs9A_MghVD3lY';
 var sb=window.supabase.createClient(SBU,SBK,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'pf-auth'}});
-var C={reports:{},pages:{},settings:null},L=[],ADMIN=false,URLS={},SIGNED={},SEED=null,SOURCE='db';
+var C={reports:{},pages:{},settings:null},L=[],ADMIN=false,VIEWER=false,URLS={},SIGNED={},SEED=null,SOURCE='db';
 function clone(o){return JSON.parse(JSON.stringify(o==null?null:o))}
 function mk(c){return{docs:Object.keys(c).map(function(k){var o=c[k];return{id:k,data:function(){return clone(o)}}})}}
 function notify(){L.slice().forEach(function(l){try{l(C)}catch(e){}});updateBar()}
@@ -66,7 +66,7 @@ async function load(){
 }
 var READY=(async function(){
   try{var ss=await sb.auth.getSession(),uid=ss.data.session&&ss.data.session.user.id;
-    if(uid){var a=await sb.from('admins').select('user_id').eq('user_id',uid).maybeSingle();ADMIN=!!(a.data)}}catch(e){}
+    if(uid){var a=await sb.from('admins').select('user_id').eq('user_id',uid).maybeSingle();ADMIN=!!(a.data);if(!ADMIN){var v=await sb.from('viewers').select('user_id').eq('user_id',uid).maybeSingle();VIEWER=!!(v.data)}}}catch(e){}
   try{await load()}catch(e){}
   setTimeout(function(){mount();updateBar()},0);
 })();
@@ -101,14 +101,14 @@ async function restoreZip(file){
 }
 function updateBar(){var s=document.getElementById('pf-st');if(!s||s.dataset.busy)return;if(!s.textContent)s.textContent=ADMIN?'مسجّلة الدخول · الحفظ تلقائي':''}
 function openLogin(){
-  var d=el('div',{id:'pf-dlg'},'<div><h3>دخول المعلمة</h3><label>البريد الإلكتروني</label><input id="pf-e" type="email" autocomplete="username"><label>كلمة المرور</label><input id="pf-p" type="password" autocomplete="current-password"><div id="pf-err"></div><div class="row"><button class="pri" id="pf-go">دخول</button><button id="pf-x">إلغاء</button></div></div>');
+  var d=el('div',{id:'pf-dlg'},'<div><h3>تسجيل الدخول</h3><label>البريد الإلكتروني</label><input id="pf-e" type="email" autocomplete="username"><label>كلمة المرور</label><input id="pf-p" type="password" autocomplete="current-password"><div id="pf-err"></div><div class="row"><button class="pri" id="pf-go">دخول</button><button id="pf-x">إلغاء</button></div></div>');
   document.body.appendChild(d);d.querySelector('#pf-e').focus();
   d.querySelector('#pf-x').onclick=function(){d.remove()};
   var go=async function(){var er=d.querySelector('#pf-err');er.textContent='جارٍ التحقق…';
     var r=await sb.auth.signInWithPassword({email:d.querySelector('#pf-e').value.trim(),password:d.querySelector('#pf-p').value});
     if(r.error){er.textContent='تعذر الدخول: البريد أو كلمة المرور غير صحيحة';return}
     var a=await sb.from('admins').select('user_id').eq('user_id',r.data.user.id).maybeSingle();
-    if(!a.data){await sb.auth.signOut();er.textContent='هذا الحساب ليس حساب الإدارة';return}
+    if(!a.data){var v=await sb.from('viewers').select('user_id').eq('user_id',r.data.user.id).maybeSingle();if(!v.data){await sb.auth.signOut();er.textContent='هذا الحساب غير مصرّح له';return}}
     location.reload()};
   d.querySelector('#pf-go').onclick=go;d.addEventListener('keydown',function(e){if(e.key==='Enter')go()});
 }
@@ -116,7 +116,8 @@ function mount(){
   if(document.getElementById('pf-bar'))return;
   document.head.appendChild(el('style',{},css));
   var b=el('div',{id:'pf-bar'});document.body.appendChild(b);
-  if(!ADMIN){var l=el('button',{class:'lock',type:'button'},'دخول المعلمة');l.onclick=openLogin;b.appendChild(l);return}
+  if(VIEWER&&!ADMIN){b.appendChild(el('span',{id:'pf-st'},'عرض كامل للاطلاع فقط'));var lo=el('button',{type:'button'},'تسجيل الخروج');lo.onclick=async function(){await sb.auth.signOut();location.reload()};b.appendChild(lo);return}
+  if(!ADMIN){var l=el('button',{class:'lock',type:'button'},'دخول المعلمة والمديرة');l.onclick=openLogin;b.appendChild(l);return}
   b.appendChild(el('span',{id:'pf-st'}));
   var bk=el('button',{type:'button'},'نسخة احتياطية كاملة (ZIP)');bk.onclick=backupZip;b.appendChild(bk);
   var rs=el('label',{class:'lock'},'استعادة من نسخة<input type="file" id="pf-rs" accept=".zip" hidden>');rs.style.cssText='cursor:pointer;border:1px solid #c9d3dc;background:#fff;color:#12304a;border-radius:999px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.12);opacity:1;font-size:13px';b.appendChild(rs);rs.querySelector('input').onchange=function(e){var f=e.target.files[0];e.target.value='';if(f)restoreZip(f)};
